@@ -13,6 +13,7 @@ import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.internals.KeyValueStoreBuilder;
 import org.example.kafka.streaming.pairs.Pair;
 import org.example.kafka.streaming.pairs.PairTransformerSupplier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaStreamsDefaultConfiguration;
@@ -23,11 +24,21 @@ import java.util.Map;
 @Configuration
 public class SpringStreamConfig {
 
+    @Value("${local.stream.store}")
+    private String stateStoreName;
+    @Value("${local.stream.input}")
+    private String inputTopic;
+    @Value("${local.stream.output}")
+    private String outputTopic;
+    @Value("${local.stream.name}")
+    private String streamingAppName;
+    @Value("${local.kafka.bootstrap-servers}")
+    private String bootStrapServers;
+
     @Bean
     public KStream<String, String> sampleStream(StreamsBuilder builder) {
-        KStream<String, String> messages = builder.stream("sample-messages", Consumed.with(Serdes.String(), Serdes.String()));
-        transformToPairs(messages);
-        KeyValueBytesStoreSupplier store = Stores.persistentKeyValueStore("sample-stream-store");
+        KStream<String, String> messages = builder.stream(inputTopic, Consumed.with(Serdes.String(), Serdes.String()));
+        KeyValueBytesStoreSupplier store = Stores.persistentKeyValueStore(stateStoreName);
         StoreBuilder storeBuilder = new KeyValueStoreBuilder<>(
                 store,
                 new Serdes.StringSerde(),
@@ -35,22 +46,26 @@ public class SpringStreamConfig {
                 Time.SYSTEM
         );
         builder.addStateStore(storeBuilder);
+        transformToPairs(messages);
         return messages;
     }
 
     private void transformToPairs(KStream<String, String> messages) {
-        messages.transform(new PairTransformerSupplier<>())
-                .filter((key, value) -> value != null)
-                .mapValues(Pair::toString)
-                .to("pairsTransformed");
+        KStream<String, Pair<String, String>> pairs = messages.transform(
+                new PairTransformerSupplier<>(),
+                stateStoreName
+        );
+        KStream<String, Pair<String, String>> filtered = pairs.filter((key, value) -> value != null);
+        KStream<String, String> serialized = filtered.mapValues(Pair::toString);
+        serialized.to(outputTopic);
     }
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     public StreamsConfig kStreamsConfigs() {
         Map<String, Object> props = new HashMap<>();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "sample-stream-application");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, streamingAppName);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class.getName());
         props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000);

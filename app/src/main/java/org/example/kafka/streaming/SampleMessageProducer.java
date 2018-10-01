@@ -2,6 +2,7 @@ package org.example.kafka.streaming;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,9 @@ public class SampleMessageProducer {
 
     private final KafkaTemplate<Integer, String> kafkaTemplate;
 
+    @Value("${local.stream.input}")
+    private String inputTopic;
+
     @Autowired
     public SampleMessageProducer(KafkaTemplate<Integer, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
@@ -28,7 +32,7 @@ public class SampleMessageProducer {
     @Scheduled(fixedDelay = 1000)
     public void send() {
         log.info("================ Sending sample message ====================");
-        kafkaTemplate.send("sample-messages", randomMessage().toString());
+        kafkaTemplate.send(inputTopic, randomMessage().toString());
     }
 
     private static Message randomMessage() {

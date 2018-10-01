@@ -1,0 +1,10 @@
+local:
+  stream:
+    name: pairing-stream-app
+    input: sample-messages
+    output: pairs-of-messages
+    store: pairs-store
+  kafka:
+    bootstrap-servers: localhost:9092
+  consumer:
+    groupId: pair-logger-consumer
