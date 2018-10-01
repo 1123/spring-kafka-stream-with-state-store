@@ -1,7 +1,6 @@
 # spring-kafka-stream-with-state-store
-Sample Spring Boot Application for Stateful Transformations of Messages
 
-This is a sample Spring Boot application for a stateful transformation with Kafka-Streams. 
+This is a sample Spring Boot application for a stateful transformation with Kafka-Streams. It reads messages from one topic, and outputs pairs of these messages to a new topic. 
 
 Prerequisites:
 
