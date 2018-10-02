@@ -13,6 +13,7 @@ import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.internals.KeyValueStoreBuilder;
 import org.example.kafka.streaming.pairs.Pair;
 import org.example.kafka.streaming.pairs.PairTransformerSupplier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,13 +36,16 @@ public class SpringStreamConfig {
     @Value("${local.kafka.bootstrap-servers}")
     private String bootStrapServers;
 
+    @Autowired
+    private PairTransformerSupplier<String, String> pairTransformerSupplier;
+
     @Bean
     public KStream<String, String> sampleStream(StreamsBuilder builder) {
         KStream<String, String> messages = builder.stream(inputTopic, Consumed.with(Serdes.String(), Serdes.String()));
         KeyValueBytesStoreSupplier store = Stores.persistentKeyValueStore(stateStoreName);
         StoreBuilder storeBuilder = new KeyValueStoreBuilder<>(
                 store,
-                new Serdes.StringSerde(),
+                new Serdes.IntegerSerde(),
                 new Serdes.StringSerde(),
                 Time.SYSTEM
         );
@@ -52,7 +56,7 @@ public class SpringStreamConfig {
 
     private void transformToPairs(KStream<String, String> messages) {
         KStream<String, Pair<String, String>> pairs = messages.transform(
-                new PairTransformerSupplier<>(),
+                pairTransformerSupplier,
                 stateStoreName
         );
         KStream<String, Pair<String, String>> filtered = pairs.filter((key, value) -> value != null);
