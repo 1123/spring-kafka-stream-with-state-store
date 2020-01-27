@@ -6,6 +6,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.StoreBuilder;
@@ -61,10 +63,10 @@ public class SpringStreamConfig {
         );
         KStream<String, Pair<String, String>> filtered = pairs.filter((key, value) -> value != null);
         KStream<String, String> serialized = filtered.mapValues(Pair::toString);
-        serialized.to(outputTopic);
+        serialized.to(outputTopic, Produced.valueSerde(new Serdes.StringSerde()));
     }
 
-    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
+    @Bean(name = "sampleStreamsConfig")
     public StreamsConfig kStreamsConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, streamingAppName);

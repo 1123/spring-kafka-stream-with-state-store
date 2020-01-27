@@ -8,3 +8,8 @@ local:
     bootstrap-servers: localhost:9092
   consumer:
     groupId: pair-logger-consumer
+
+spring:
+  kafka:
+    streams:
+      application-id: sampleStreamsApp

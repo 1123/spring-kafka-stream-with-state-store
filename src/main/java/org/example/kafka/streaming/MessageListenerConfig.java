@@ -1,6 +1,7 @@
 package org.example.kafka.streaming;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
@@ -49,6 +51,23 @@ public class MessageListenerConfig {
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
+
+    @Bean
+    public NewTopic inputTopic(@Value("${local.stream.input}") String inputTopic) {
+        return TopicBuilder.name(inputTopic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic outputTopic(@Value("${local.stream.output}") String outputTopic) {
+        return TopicBuilder.name(outputTopic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
 
 }
 
