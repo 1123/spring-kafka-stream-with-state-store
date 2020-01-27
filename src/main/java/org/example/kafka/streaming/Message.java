@@ -9,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 class Message {
 
+    private int key;
     private String source;
     private float lng;
     private float lat;

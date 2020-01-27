@@ -26,19 +26,22 @@ public class SampleMessageProducer {
     }
 
     private static final List<String> sources = Arrays.asList("s1", "s2", "s3");
+    private static final List<String> keys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
     private static Random r = new Random();
     private static long startTime = 0L;
 
     @Scheduled(fixedDelay = 1000)
     public void send() {
         log.info("================ Sending sample message ====================");
-        kafkaTemplate.send(inputTopic, randomMessage().toString());
+        int key = r.nextInt(5);
+        kafkaTemplate.send(inputTopic, key, randomMessage(key).toString());
     }
 
-    private static Message randomMessage() {
+    private static Message randomMessage(int key) {
         int timestep = r.nextInt(100);
         startTime += timestep;
         return Message.builder()
+                .key(key)
                 .lat(r.nextFloat())
                 .lng(r.nextFloat())
                 .source(sources.get(r.nextInt(3)))

@@ -8,25 +8,25 @@ import org.apache.kafka.streams.state.KeyValueStore;
 public class PairTransformer<K,V> implements Transformer<K, V, KeyValue<K, Pair<V, V>>> {
     private ProcessorContext context;
     private String storeName;
-    private KeyValueStore<Integer, V> stateStore;
+    private KeyValueStore<K, V> stateStore;
 
-    public PairTransformer(String storeName) {
+    PairTransformer(String storeName) {
         this.storeName = storeName;
     }
 
     @Override
     public void init(ProcessorContext context) {
         this.context = context;
-        stateStore = (KeyValueStore<Integer, V>) context.getStateStore(storeName);
+        stateStore = (KeyValueStore<K, V>) context.getStateStore(storeName);
     }
 
     @Override
     public KeyValue<K, Pair<V, V>> transform(K key, V value) {
-        if (stateStore.get(1) == null) {
-            stateStore.put(1, value); return null;
+        if (stateStore.get(key) == null) {
+            stateStore.put(key, value); return null;
         }
-        KeyValue<K, Pair<V,V>> result = KeyValue.pair(key, new Pair<>(stateStore.get(1), value));
-        stateStore.put(1, null);
+        KeyValue<K, Pair<V,V>> result = KeyValue.pair(key, new Pair<>(stateStore.get(key), value));
+        stateStore.put(key, null);
         return result;
     }
 

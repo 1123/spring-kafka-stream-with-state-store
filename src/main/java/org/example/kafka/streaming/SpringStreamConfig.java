@@ -39,11 +39,11 @@ public class SpringStreamConfig {
     private String bootStrapServers;
 
     @Autowired
-    private PairTransformerSupplier<String, String> pairTransformerSupplier;
+    private PairTransformerSupplier<String> pairTransformerSupplier;
 
     @Bean
-    public KStream<String, String> sampleStream(StreamsBuilder builder) {
-        KStream<String, String> messages = builder.stream(inputTopic, Consumed.with(Serdes.String(), Serdes.String()));
+    public KStream<Integer, String> sampleStream(StreamsBuilder builder) {
+        KStream<Integer, String> messages = builder.stream(inputTopic, Consumed.with(Serdes.Integer(), Serdes.String()));
         KeyValueBytesStoreSupplier store = Stores.persistentKeyValueStore(stateStoreName);
         StoreBuilder storeBuilder = new KeyValueStoreBuilder<>(
                 store,
@@ -56,21 +56,21 @@ public class SpringStreamConfig {
         return messages;
     }
 
-    private void transformToPairs(KStream<String, String> messages) {
-        KStream<String, Pair<String, String>> pairs = messages.transform(
+    private void transformToPairs(KStream<Integer, String> messages) {
+        KStream<Integer, Pair<String, String>> pairs = messages.transform(
                 pairTransformerSupplier,
                 stateStoreName
         );
-        KStream<String, Pair<String, String>> filtered = pairs.filter((key, value) -> value != null);
-        KStream<String, String> serialized = filtered.mapValues(Pair::toString);
-        serialized.to(outputTopic, Produced.valueSerde(new Serdes.StringSerde()));
+        KStream<Integer, Pair<String, String>> filtered = pairs.filter((key, value) -> value != null);
+        KStream<Integer, String> serialized = filtered.mapValues(Pair::toString);
+        serialized.to(outputTopic, Produced.with(new Serdes.IntegerSerde(), new Serdes.StringSerde()));
     }
 
     @Bean(name = "sampleStreamsConfig")
     public StreamsConfig kStreamsConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, streamingAppName);
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Integer().getClass().getName());
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class.getName());

@@ -4,7 +4,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.kstream.TransformerSupplier;
 
-public class PairTransformerSupplier<K,V> implements TransformerSupplier<K, V, KeyValue<K, Pair<V,V>>> {
+public class PairTransformerSupplier<V> implements TransformerSupplier<Integer, V, KeyValue<Integer, Pair<V,V>>> {
 
     private String storeName;
 
@@ -13,7 +13,7 @@ public class PairTransformerSupplier<K,V> implements TransformerSupplier<K, V, K
     }
 
     @Override
-    public Transformer<K, V, KeyValue<K, Pair<V, V>>> get() {
+    public Transformer<Integer, V, KeyValue<Integer, Pair<V, V>>> get() {
         return new PairTransformer<>(storeName);
     }
 }
